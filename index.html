@@ -2,7 +2,7 @@
 <html class="dark" dir="ltr" lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=0.85">
     <title>Image Converter</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com" rel="preconnect">
@@ -62,7 +62,7 @@
             
             <!-- Header -->
             <div class="mb-8 text-center">
-                <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-2">Image Converter</h1>
+                <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-2"><span style="color: #2196f3; font-size: 2.5rem;">📷</span> Image Converter</h1>
                 <p class="text-slate-500 dark:text-on-surface-variant text-sm">Convert your images to different formats</p>
             </div>
 
@@ -161,11 +161,17 @@
             e.preventDefault();
             dropZone.classList.remove('bg-slate-50', 'dark:bg-surface-bright');
             handleFiles(e.dataTransfer.files);
+            if (e.dataTransfer.files.length > 0) {
+                showStatus(`✓ Successfully upload ${e.dataTransfer.files.length} image${e.dataTransfer.files.length > 1 ? 's' : ''}!`, 'success');
+            }
         });
 
         // File input change
         fileInput.addEventListener('change', (e) => {
             handleFiles(e.target.files);
+            if (e.target.files.length > 0) {
+                showStatus(`✓ Successfully upload ${e.target.files.length} image${e.target.files.length > 1 ? 's' : ''}!`, 'success');
+            }
         });
 
         function handleFiles(files) {
