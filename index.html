@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>محول الصور - Image Converter</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+        }
+
+        .upload-area:hover {
+            background: #f8f9ff;
+            border-color: #764ba2;
+        }
+
+        .upload-area.dragover {
+            background: #f0f4ff;
+            border-color: #764ba2;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .upload-area p {
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .upload-area small {
+            color: #999;
+            display: block;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .format-selector {
+            margin-bottom: 30px;
+        }
+
+        .format-selector label {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .format-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+        }
+
+        .format-btn {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            color: #666;
+        }
+
+        .format-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .format-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        .image-list {
+            margin-bottom: 30px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .image-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: #f8f9ff;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .image-item-name {
+            flex: 1;
+            color: #333;
+            font-size: 14px;
+            word-break: break-word;
+        }
+
+        .remove-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            margin-left: 10px;
+        }
+
+        .remove-btn:hover {
+            background: #ff5252;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-convert {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            grid-column: 1 / -1;
+        }
+
+        .btn-convert:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-convert:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-download {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-download:hover {
+            background: #229954;
+        }
+
+        .btn-clear {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-clear:hover {
+            background: #c0392b;
+        }
+
+        .progress {
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #ddd;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: #667eea;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .format-grid {
+                grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 محول الصور</h1>
+        <p class="subtitle">Image Converter - حول صورك لصيغ مختلفة</p>
+
+        <div class="status" id="status"></div>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📸</div>
+            <p>اسحب الصور هنا أو انقر للاختيار</p>
+            <small>Drag images or click to select</small>
+            <input type="file" id="fileInput" multiple accept="image/*">
+        </div>
+
+        <div class="format-selector">
+            <label for="format">اختر صيغة التحويل:</label>
+            <div class="format-grid" id="formatGrid">
+                <button class="format-btn active" data-format="png">PNG</button>
+                <button class="format-btn" data-format="jpeg">JPEG</button>
+                <button class="format-btn" data-format="webp">WebP</button>
+                <button class="format-btn" data-format="bmp">BMP</button>
+                <button class="format-btn" data-format="gif">GIF</button>
+            </div>
+        </div>
+
+        <div class="image-list" id="imageList">
+            <div class="empty-state">لم يتم اختيار صور بعد</div>
+        </div>
+
+        <div class="progress" id="progress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">0%</div>
+        </div>
+
+        <div class="button-group">
+            <button class="btn btn-convert" id="convertBtn" disabled>تحويل وتحميل ZIP</button>
+            <button class="btn btn-clear" id="clearBtn" disabled>مسح الكل</button>
+        </div>
+    </div>
+
+    <script>
+        let selectedFiles = [];
+        let selectedFormat = 'png';
+
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const imageList = document.getElementById('imageList');
+        const formatGrid = document.getElementById('formatGrid');
+        const convertBtn = document.getElementById('convertBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const progress = document.getElementById('progress');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const status = document.getElementById('status');
+
+        // Upload area events
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            selectedFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+            if (selectedFiles.length > 0) {
+                updateImageList();
+                convertBtn.disabled = false;
+                clearBtn.disabled = false;
+            }
+        }
+
+        function updateImageList() {
+            if (selectedFiles.length === 0) {
+                imageList.innerHTML = '<div class="empty-state">لم يتم اختيار صور بعد</div>';
+                return;
+            }
+            imageList.innerHTML = selectedFiles.map((file, index) => `
+                <div class="image-item">
+                    <span class="image-item-name">${file.name}</span>
+                    <button class="remove-btn" onclick="removeFile(${index})">حذف</button>
+                </div>
+            `).join('');
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateImageList();
+            if (selectedFiles.length === 0) {
+                convertBtn.disabled = true;
+                clearBtn.disabled = true;
+            }
+        }
+
+        // Format selection
+        formatGrid.addEventListener('click', (e) => {
+            if (e.target.classList.contains('format-btn')) {
+                document.querySelectorAll('.format-btn').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                selectedFormat = e.target.dataset.format;
+            }
+        });
+
+        // Clear all
+        clearBtn.addEventListener('click', () => {
+            selectedFiles = [];
+            fileInput.value = '';
+            updateImageList();
+            convertBtn.disabled = true;
+            clearBtn.disabled = true;
+            showStatus('تم مسح جميع الصور', 'success');
+        });
+
+        // Convert and download
+        convertBtn.addEventListener('click', async () => {
+            if (selectedFiles.length === 0) return;
+
+            convertBtn.disabled = true;
+            progress.style.display = 'block';
+            status.style.display = 'none';
+
+            const zip = new JSZip();
+            const folder = zip.folder('converted-images');
+            let processed = 0;
+
+            try {
+                for (const file of selectedFiles) {
+                    const canvas = await fileToCanvas(file);
+                    const blob = await canvasToBlob(canvas, selectedFormat);
+                    const newName = file.name.split('.')[0] + '.' + selectedFormat;
+                    folder.file(newName, blob);
+                    
+                    processed++;
+                    updateProgress(processed, selectedFiles.length);
+                }
+
+                const zipBlob = await zip.generateAsync({ type: 'blob' });
+                downloadZip(zipBlob);
+                showStatus(`✅ تم تحويل ${selectedFiles.length} صورة بنجاح!`, 'success');
+            } catch (error) {
+                showStatus('❌ حدث خطأ: ' + error.message, 'error');
+            } finally {
+                convertBtn.disabled = false;
+                setTimeout(() => {
+                    progress.style.display = 'none';
+                }, 1000);
+            }
+        });
+
+        function fileToCanvas(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+                        resolve(canvas);
+                    };
+                    img.onerror = () => reject(new Error('فشل تحميل الصورة'));
+                    img.src = e.target.result;
+                };
+                reader.onerror = () => reject(new Error('خطأ في قراءة الملف'));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function canvasToBlob(canvas, format) {
+            return new Promise((resolve) => {
+                const mimeType = {
+                    'png': 'image/png',
+                    'jpeg': 'image/jpeg',
+                    'webp': 'image/webp',
+                    'bmp': 'image/bmp',
+                    'gif': 'image/gif'
+                }[format] || 'image/png';
+
+                canvas.toBlob(resolve, mimeType, 0.95);
+            });
+        }
+
+        function updateProgress(current, total) {
+            const percent = Math.round((current / total) * 100);
+            progressFill.style.width = percent + '%';
+            progressText.textContent = percent + '%';
+        }
+
+        function downloadZip(blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `converted-images-${new Date().getTime()}.zip`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function showStatus(message, type) {
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
