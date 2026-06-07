@@ -1,4 +1,4 @@
-# 🎨 Convertio - Image Converter
+# Convertio - Image Converter
 
 Simple and fast image converter to convert your images to different formats and download them in one ZIP file.
 
