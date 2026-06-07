@@ -1,412 +1,230 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html class="dark" dir="ltr" lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>محول الصور - Image Converter</title>
+    <title>Image Converter</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2196f3',
+                        'surface': '#0F1B2D',
+                        'surface-dim': '#0F1B2D',
+                        'surface-bright': '#1a2b44',
+                        'surface-container-lowest': '#0F1B2D',
+                        'surface-container-low': '#16253b',
+                        'on-surface-variant': '#cbd5e0',
+                        'outline-variant': '#2d3748',
+                        'danger': '#ef4444'
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
         }
-
-        .container {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 600px;
-            width: 100%;
-            padding: 40px;
+        .custom-shadow {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
         }
-
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 28px;
-        }
-
-        .subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 14px;
-        }
-
-        .upload-area {
-            border: 3px dashed #667eea;
-            border-radius: 10px;
-            padding: 40px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 30px;
-        }
-
-        .upload-area:hover {
-            background: #f8f9ff;
-            border-color: #764ba2;
-        }
-
-        .upload-area.dragover {
-            background: #f0f4ff;
-            border-color: #764ba2;
-            transform: scale(1.02);
-        }
-
-        .upload-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-        }
-
-        .upload-area p {
-            color: #667eea;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-
-        .upload-area small {
-            color: #999;
-            display: block;
-        }
-
-        input[type="file"] {
-            display: none;
-        }
-
-        .format-selector {
-            margin-bottom: 30px;
-        }
-
-        .format-selector label {
-            display: block;
-            margin-bottom: 10px;
-            color: #333;
-            font-weight: 600;
-        }
-
-        .format-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            gap: 10px;
-        }
-
-        .format-btn {
-            padding: 10px;
-            border: 2px solid #ddd;
+        .dashed-border {
+            background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='8' ry='8' stroke='%232196F3' stroke-width='2' stroke-dasharray='8%2c 8' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
             border-radius: 8px;
-            background: white;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            color: #666;
-        }
-
-        .format-btn:hover {
-            border-color: #667eea;
-            color: #667eea;
-        }
-
-        .format-btn.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-color: transparent;
-        }
-
-        .image-list {
-            margin-bottom: 30px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .image-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px;
-            background: #f8f9ff;
-            border-radius: 8px;
-            margin-bottom: 8px;
-        }
-
-        .image-item-name {
-            flex: 1;
-            color: #333;
-            font-size: 14px;
-            word-break: break-word;
-        }
-
-        .remove-btn {
-            background: #ff6b6b;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 6px 12px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: all 0.3s ease;
-            margin-left: 10px;
-        }
-
-        .remove-btn:hover {
-            background: #ff5252;
-        }
-
-        .button-group {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-convert {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            grid-column: 1 / -1;
-        }
-
-        .btn-convert:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-convert:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .btn-download {
-            background: #27ae60;
-            color: white;
-        }
-
-        .btn-download:hover {
-            background: #229954;
-        }
-
-        .btn-clear {
-            background: #e74c3c;
-            color: white;
-        }
-
-        .btn-clear:hover {
-            background: #c0392b;
-        }
-
-        .progress {
-            display: none;
-            margin-bottom: 20px;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 6px;
-            background: #ddd;
-            border-radius: 3px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-            transition: width 0.3s ease;
-        }
-
-        .progress-text {
-            text-align: center;
-            color: #667eea;
-            font-size: 14px;
-            margin-top: 8px;
-        }
-
-        .status {
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
-        }
-
-        .status.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-            display: block;
-        }
-
-        .status.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-            display: block;
-        }
-
-        .empty-state {
-            text-align: center;
-            color: #999;
-            padding: 20px;
-        }
-
-        @media (max-width: 600px) {
-            .container {
-                padding: 20px;
-            }
-
-            h1 {
-                font-size: 24px;
-            }
-
-            .format-grid {
-                grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-            }
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <h1>🎨 محول الصور</h1>
-        <p class="subtitle">Image Converter - حول صورك لصيغ مختلفة</p>
-
-        <div class="status" id="status"></div>
-
-        <div class="upload-area" id="uploadArea">
-            <div class="upload-icon">📸</div>
-            <p>اسحب الصور هنا أو انقر للاختيار</p>
-            <small>Drag images or click to select</small>
-            <input type="file" id="fileInput" multiple accept="image/*">
-        </div>
-
-        <div class="format-selector">
-            <label for="format">اختر صيغة التحويل:</label>
-            <div class="format-grid" id="formatGrid">
-                <button class="format-btn active" data-format="png">PNG</button>
-                <button class="format-btn" data-format="jpeg">JPEG</button>
-                <button class="format-btn" data-format="webp">WebP</button>
-                <button class="format-btn" data-format="bmp">BMP</button>
-                <button class="format-btn" data-format="gif">GIF</button>
-            </div>
-        </div>
-
-        <div class="image-list" id="imageList">
-            <div class="empty-state">لم يتم اختيار صور بعد</div>
-        </div>
-
-        <div class="progress" id="progress">
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill"></div>
-            </div>
-            <div class="progress-text" id="progressText">0%</div>
-        </div>
-
-        <div class="button-group">
-            <button class="btn btn-convert" id="convertBtn" disabled>تحويل وتحميل ZIP</button>
-            <button class="btn btn-clear" id="clearBtn" disabled>مسح الكل</button>
-        </div>
+<body class="flex flex-col bg-slate-50 dark:bg-surface text-slate-900 dark:text-white transition-colors duration-300">
+    <!-- Theme Toggle Button -->
+    <div class="fixed top-6 left-6 z-50">
+        <button id="themeToggle" class="p-3 rounded-full bg-white dark:bg-surface-bright border border-slate-200 dark:border-outline-variant shadow-lg hover:scale-110 transition-all text-primary">
+            <span class="material-symbols-outlined block dark:hidden">dark_mode</span>
+            <span class="material-symbols-outlined hidden dark:block">light_mode</span>
+        </button>
     </div>
 
+    <!-- Main Content -->
+    <main class="flex-grow flex items-center justify-center p-4 md:p-8 min-h-screen">
+        <div class="bg-white dark:bg-surface-container-low rounded-lg custom-shadow max-w-2xl w-full p-8 md:p-12 border border-slate-200 dark:border-outline-variant">
+            
+            <!-- Header -->
+            <div class="mb-8 text-center">
+                <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-2">Image Converter</h1>
+                <p class="text-slate-500 dark:text-on-surface-variant text-sm">Convert your images to different formats</p>
+            </div>
+
+            <!-- Status Messages -->
+            <div id="statusMessage" class="mb-6 p-4 rounded-lg hidden"></div>
+
+            <!-- Drag & Drop Area -->
+            <div id="dropZone" class="dashed-border py-16 px-6 mb-8 cursor-pointer hover:bg-slate-50 dark:hover:bg-surface-bright transition-colors group">
+                <div class="flex flex-col items-center">
+                    <div class="mb-4 text-primary">
+                        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path>
+                            <path d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path>
+                        </svg>
+                    </div>
+                    <p class="text-primary font-semibold text-lg mb-1">Drag images here or click to select</p>
+                    <p class="text-slate-500 dark:text-on-surface-variant text-sm">PNG, JPEG, WebP, BMP, GIF supported</p>
+                    <input type="file" id="fileInput" multiple accept="image/*" class="hidden">
+                </div>
+            </div>
+
+            <!-- Format Selection -->
+            <div class="mb-8">
+                <p class="text-slate-900 dark:text-white font-medium mb-4">Select conversion format:</p>
+                <div id="formatGrid" class="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    <button class="format-btn py-2 border border-slate-200 dark:border-outline-variant rounded text-slate-600 dark:text-on-surface-variant font-medium hover:border-primary hover:text-primary transition-all" data-format="png">PNG</button>
+                    <button class="format-btn py-2 border border-slate-200 dark:border-outline-variant rounded text-slate-600 dark:text-on-surface-variant font-medium hover:border-primary hover:text-primary transition-all" data-format="jpeg">JPEG</button>
+                    <button class="format-btn py-2 border border-slate-200 dark:border-outline-variant rounded text-slate-600 dark:text-on-surface-variant font-medium hover:border-primary hover:text-primary transition-all" data-format="webp">WebP</button>
+                    <button class="format-btn py-2 border border-slate-200 dark:border-outline-variant rounded text-slate-600 dark:text-on-surface-variant font-medium hover:border-primary hover:text-primary transition-all" data-format="bmp">BMP</button>
+                    <button class="format-btn py-2 border border-slate-200 dark:border-outline-variant rounded text-slate-600 dark:text-on-surface-variant font-medium hover:border-primary hover:text-primary transition-all" data-format="gif">GIF</button>
+                </div>
+            </div>
+
+            <!-- Status Text -->
+            <div class="mb-10 text-slate-500 dark:text-on-surface-variant text-sm text-center">
+                <span id="statusText">No images selected yet</span>
+            </div>
+
+            <!-- Image List -->
+            <div id="imageList" class="mb-8 max-h-64 overflow-y-auto"></div>
+
+            <!-- Progress Bar -->
+            <div id="progressContainer" class="mb-8 hidden">
+                <div class="w-full bg-slate-200 dark:bg-outline-variant rounded-full h-2 mb-2 overflow-hidden">
+                    <div id="progressBar" class="bg-primary h-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <p class="text-slate-500 dark:text-on-surface-variant text-sm text-center"><span id="progressText">0</span>%</p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col gap-4">
+                <button id="convertBtn" disabled class="w-full py-4 bg-primary/40 text-slate-400 dark:text-white/50 font-bold rounded-lg shadow-sm cursor-not-allowed transition-all">
+                    Convert & Download ZIP
+                </button>
+                <button id="clearBtn" class="w-full py-3 bg-danger text-white font-bold rounded-lg hover:bg-red-600 transition-all active:scale-95 shadow-md">
+                    Clear All
+                </button>
+            </div>
+        </div>
+    </main>
+
     <script>
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+        });
+
+        // Variables
         let selectedFiles = [];
         let selectedFormat = 'png';
-
-        const uploadArea = document.getElementById('uploadArea');
+        const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
+        const statusText = document.getElementById('statusText');
         const imageList = document.getElementById('imageList');
-        const formatGrid = document.getElementById('formatGrid');
         const convertBtn = document.getElementById('convertBtn');
         const clearBtn = document.getElementById('clearBtn');
-        const progress = document.getElementById('progress');
-        const progressFill = document.getElementById('progressFill');
+        const formatGrid = document.getElementById('formatGrid');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
         const progressText = document.getElementById('progressText');
-        const status = document.getElementById('status');
+        const statusMessage = document.getElementById('statusMessage');
 
-        // Upload area events
-        uploadArea.addEventListener('click', () => fileInput.click());
-        uploadArea.addEventListener('dragover', (e) => {
+        // Drop zone events
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
-            uploadArea.classList.add('dragover');
+            dropZone.classList.add('bg-slate-50', 'dark:bg-surface-bright');
         });
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragover');
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('bg-slate-50', 'dark:bg-surface-bright');
         });
-        uploadArea.addEventListener('drop', (e) => {
+        dropZone.addEventListener('drop', (e) => {
             e.preventDefault();
-            uploadArea.classList.remove('dragover');
+            dropZone.classList.remove('bg-slate-50', 'dark:bg-surface-bright');
             handleFiles(e.dataTransfer.files);
         });
 
+        // File input change
         fileInput.addEventListener('change', (e) => {
             handleFiles(e.target.files);
         });
 
         function handleFiles(files) {
             selectedFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
-            if (selectedFiles.length > 0) {
-                updateImageList();
-                convertBtn.disabled = false;
-                clearBtn.disabled = false;
-            }
+            updateUI();
         }
 
-        function updateImageList() {
+        function updateUI() {
             if (selectedFiles.length === 0) {
-                imageList.innerHTML = '<div class="empty-state">لم يتم اختيار صور بعد</div>';
-                return;
+                statusText.textContent = 'No images selected yet';
+                imageList.innerHTML = '';
+                convertBtn.disabled = true;
+                convertBtn.classList.remove('bg-primary', 'text-white', 'hover:bg-blue-600', 'active:scale-95');
+                convertBtn.classList.add('bg-primary/40', 'text-slate-400', 'dark:text-white/50', 'cursor-not-allowed');
+            } else {
+                statusText.textContent = `Selected ${selectedFiles.length} image${selectedFiles.length > 1 ? 's' : ''}`;
+                imageList.innerHTML = selectedFiles.map((file, index) => `
+                    <div class="flex items-center justify-between p-3 bg-slate-100 dark:bg-surface-bright rounded mb-2">
+                        <span class="text-sm text-slate-700 dark:text-on-surface-variant truncate">${file.name}</span>
+                        <button onclick="removeFile(${index})" class="ml-2 text-danger hover:text-red-700 text-sm font-medium">Remove</button>
+                    </div>
+                `).join('');
+                
+                if (convertBtn.disabled) {
+                    convertBtn.disabled = false;
+                    convertBtn.classList.add('bg-primary', 'text-white', 'hover:bg-blue-600', 'active:scale-95');
+                    convertBtn.classList.remove('bg-primary/40', 'text-slate-400', 'dark:text-white/50', 'cursor-not-allowed');
+                }
             }
-            imageList.innerHTML = selectedFiles.map((file, index) => `
-                <div class="image-item">
-                    <span class="image-item-name">${file.name}</span>
-                    <button class="remove-btn" onclick="removeFile(${index})">حذف</button>
-                </div>
-            `).join('');
         }
 
         function removeFile(index) {
             selectedFiles.splice(index, 1);
-            updateImageList();
-            if (selectedFiles.length === 0) {
-                convertBtn.disabled = true;
-                clearBtn.disabled = true;
-            }
+            updateUI();
         }
 
         // Format selection
         formatGrid.addEventListener('click', (e) => {
             if (e.target.classList.contains('format-btn')) {
-                document.querySelectorAll('.format-btn').forEach(btn => btn.classList.remove('active'));
-                e.target.classList.add('active');
+                document.querySelectorAll('.format-btn').forEach(btn => {
+                    btn.classList.remove('bg-primary', 'text-white');
+                    btn.classList.add('border', 'border-slate-200', 'dark:border-outline-variant', 'text-slate-600', 'dark:text-on-surface-variant');
+                });
+                e.target.classList.remove('border', 'border-slate-200', 'dark:border-outline-variant', 'text-slate-600', 'dark:text-on-surface-variant');
+                e.target.classList.add('bg-primary', 'text-white');
                 selectedFormat = e.target.dataset.format;
             }
         });
+
+        // Set PNG as default selected
+        document.querySelector('[data-format="png"]').classList.add('bg-primary', 'text-white');
+        document.querySelector('[data-format="png"]').classList.remove('border', 'border-slate-200', 'dark:border-outline-variant', 'text-slate-600', 'dark:text-on-surface-variant');
 
         // Clear all
         clearBtn.addEventListener('click', () => {
             selectedFiles = [];
             fileInput.value = '';
-            updateImageList();
-            convertBtn.disabled = true;
-            clearBtn.disabled = true;
-            showStatus('تم مسح جميع الصور', 'success');
+            updateUI();
+            showStatus('All images cleared', 'success');
         });
 
         // Convert and download
@@ -414,8 +232,8 @@
             if (selectedFiles.length === 0) return;
 
             convertBtn.disabled = true;
-            progress.style.display = 'block';
-            status.style.display = 'none';
+            progressContainer.classList.remove('hidden');
+            statusMessage.classList.add('hidden');
 
             const zip = new JSZip();
             const folder = zip.folder('converted-images');
@@ -434,13 +252,13 @@
 
                 const zipBlob = await zip.generateAsync({ type: 'blob' });
                 downloadZip(zipBlob);
-                showStatus(`✅ تم تحويل ${selectedFiles.length} صورة بنجاح!`, 'success');
+                showStatus(`✓ Successfully converted ${selectedFiles.length} image${selectedFiles.length > 1 ? 's' : ''}!`, 'success');
             } catch (error) {
-                showStatus('❌ حدث خطأ: ' + error.message, 'error');
+                showStatus('✗ Error: ' + error.message, 'error');
             } finally {
                 convertBtn.disabled = false;
                 setTimeout(() => {
-                    progress.style.display = 'none';
+                    progressContainer.classList.add('hidden');
                 }, 1000);
             }
         });
@@ -458,10 +276,10 @@
                         ctx.drawImage(img, 0, 0);
                         resolve(canvas);
                     };
-                    img.onerror = () => reject(new Error('فشل تحميل الصورة'));
+                    img.onerror = () => reject(new Error('Failed to load image'));
                     img.src = e.target.result;
                 };
-                reader.onerror = () => reject(new Error('خطأ في قراءة الملف'));
+                reader.onerror = () => reject(new Error('Failed to read file'));
                 reader.readAsDataURL(file);
             });
         }
@@ -482,8 +300,8 @@
 
         function updateProgress(current, total) {
             const percent = Math.round((current / total) * 100);
-            progressFill.style.width = percent + '%';
-            progressText.textContent = percent + '%';
+            progressBar.style.width = percent + '%';
+            progressText.textContent = percent;
         }
 
         function downloadZip(blob) {
@@ -498,9 +316,15 @@
         }
 
         function showStatus(message, type) {
-            status.textContent = message;
-            status.className = `status ${type}`;
-            status.style.display = 'block';
+            statusMessage.textContent = message;
+            statusMessage.classList.remove('hidden');
+            if (type === 'success') {
+                statusMessage.classList.add('bg-green-100', 'dark:bg-green-900', 'text-green-800', 'dark:text-green-200');
+                statusMessage.classList.remove('bg-red-100', 'dark:bg-red-900', 'text-red-800', 'dark:text-red-200');
+            } else {
+                statusMessage.classList.add('bg-red-100', 'dark:bg-red-900', 'text-red-800', 'dark:text-red-200');
+                statusMessage.classList.remove('bg-green-100', 'dark:bg-green-900', 'text-green-800', 'dark:text-green-200');
+            }
         }
     </script>
 </body>
